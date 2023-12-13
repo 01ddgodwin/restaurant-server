@@ -11,7 +11,7 @@ app.use(cors());
 // Define your API endpoint to fetch restaurants from Yelp
 app.get('/api/restaurants', async (req, res) => {
   try {
-    const { latitude, longitude, radius } = req.query;
+    const { latitude, longitude, radius, open_now, price } = req.query;
     const apiKey = process.env.YELP_API_KEY; // Replace with your Yelp API key
 
     // Make a request to Yelp API
@@ -21,7 +21,9 @@ app.get('/api/restaurants', async (req, res) => {
         longitude,
         term: 'restaurants', // Adjust query parameters as needed
         limit: 20,
-        radius: radius * 1609
+        radius: radius * 1609,
+        open_now,
+        price 
       },
       headers: {
         Authorization: `Bearer ${apiKey}`,

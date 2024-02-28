@@ -20,7 +20,7 @@ app.get('/api/restaurants', async (req, res) => {
         latitude,
         longitude,
         term: 'restaurants', // Adjust query parameters as needed
-        limit: 20,
+        limit: 50,
         radius: radius * 1609,
         open_now,
         price,

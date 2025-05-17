@@ -39,48 +39,62 @@ app.use(cors());
 
 app.get("/api/google-restaurants", async (req, res) => {
   try {
-    const {
-      latitude,
-      longitude,
-      radiusInMiles, // Expecting miles from client
-      openNow, // Expecting 'true' or 'false' string from client query params
-      priceLevels, // Expecting string like "1,3" (for minPrice, maxPrice) or "2" (for minPrice=2, maxPrice=2)
-      cuisineKeywords, // Expecting string like "italian,pizza"
-    } = req.query;
+    console.log("SERVER: Received request for /api/google-restaurants");
+    console.log("SERVER: Query params received from client:", req.query);
+
+    // Destructure and ensure they are numbers for the location parameter
+    const lat = parseFloat(req.query.latitude);
+    const lng = parseFloat(req.query.longitude);
+    const radiusInMiles = parseFloat(req.query.radiusInMiles);
+    const openNow = req.query.openNow === "true"; // Convert string to boolean
+    const priceLevels = req.query.priceLevels; // String like "1,3"
+    const cuisineKeywords = req.query.cuisineKeywords;
+
+    if (isNaN(lat) || isNaN(lng) || isNaN(radiusInMiles)) {
+      console.error(
+        "SERVER ERROR: Invalid latitude, longitude, or radius received."
+      );
+      return res
+        .status(400)
+        .json({ message: "Invalid location or radius parameters." });
+    }
 
     const googleApiKey = process.env.Maps_API_KEY;
-    const radiusInMeters = parseFloat(radiusInMiles) * 1609.34;
+    // ... (check for googleApiKey) ...
 
-    let googleParams = {
-      location: `<span class="math-inline">\{latitude\},</span>{longitude}`,
+    const radiusInMeters = radiusInMiles * 1609.34;
+
+    let googleAPIParams = {
+      location: `${lat},${lng}`, // Use the parsed lat and lng variables
       radius: radiusInMeters.toString(),
       type: "restaurant",
       key: googleApiKey,
       keyword: "restaurant", // Base keyword
     };
 
-    if (openNow === "true") {
-      googleParams.opennow = "true";
+    if (openNow) {
+      googleAPIParams.opennow = "true";
     }
 
-    // Handle priceLevels from client (e.g., "1,3" -> minprice=1, maxprice=3)
-    // Google uses 0-4. Client needs to send values in this range.
     if (priceLevels) {
       const prices = priceLevels
         .split(",")
         .map((p) => parseInt(p.trim(), 10))
         .filter((p) => !isNaN(p) && p >= 0 && p <= 4);
       if (prices.length > 0) {
-        googleParams.minprice = Math.min(...prices).toString();
-        googleParams.maxprice = Math.max(...prices).toString();
+        googleAPIParams.minprice = Math.min(...prices).toString();
+        googleAPIParams.maxprice = Math.max(...prices).toString();
       }
     }
 
     if (cuisineKeywords) {
-      googleParams.keyword += ` ${cuisineKeywords.replace(/,/g, " ")}`; // Add cuisines to keyword search
+      googleAPIParams.keyword += ` ${cuisineKeywords.replace(/,/g, " ")}`;
     }
 
-    console.log("Requesting Google Places API with params:", googleParams);
+    console.log(
+      "SERVER: Calling Google Places API with correct params:",
+      googleAPIParams
+    );
 
     const googleResponse = await axios.get(
       "https://maps.googleapis.com/maps/api/place/nearbysearch/json",

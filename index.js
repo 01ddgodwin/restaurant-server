@@ -99,7 +99,7 @@ app.get("/api/google-restaurants", async (req, res) => {
     const googleResponse = await axios.get(
       "https://maps.googleapis.com/maps/api/place/nearbysearch/json",
       {
-        params: googleParams,
+        params: googleAPIParams,
       }
     );
 
